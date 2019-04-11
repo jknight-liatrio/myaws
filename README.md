@@ -2,15 +2,16 @@
  
 Making `aws-vault` easier.
 
-Are you tired of constantly appending `aws-vault ...` in front of all of you `aws` commands?
-Well now you don't have to. This is a tool to help with managing `aws-vault`.
+Are you tired of constantly appending `aws-vault my-profile exec -- ...` in front of all of you `aws` commands?
+There has to be a better way...
 
+<img src="https://media.giphy.com/media/l0HlOrRj8sqK1xiJa/giphy.gif" />
 
 ## Usage
 
-There are several usage modes for this tool.
+There are several usage ways to run `myaws`.
 
-1. Run as a shorter command
+1. Run as a shorter version of `aws-vault my-profile exec`.
 
     Running it with no arguments shows the current profiles.
     
@@ -28,42 +29,65 @@ There are several usage modes for this tool.
     You can also run it as a substitute to the `aws` command.
     
     ```bash
+    # Here we can't access our eks cluster because we have not authenticated
+ 
     joe$ kubectl auth can-i get all
     + /usr/local/bin/aws-vault exec my-value-profile -- kubectl auth can-i get all
-    Warning: the server doesn't have a resource type 'all'
     no
-
-    joe$ myaws eks update-kubeconfig --name=k
+    ```
+    
+    Now we authenticate and setup our kube config.
+    ```bash
+    joe$ myaws eks update-kubeconfig --name=cluster
     + /usr/local/bin/aws-vault exec my-vault-profile -- aws eks update-kubeconfig --name=cluster1
     Updated context arn:aws:eks:us-east-6:390832203:cluster/mycluster in ~/.kube/config
-
+    ```
+    
+    Now we can run kubectl run this instead of constantly typing `aws-vault my-profile exec` in front of everything.
+    ```bash
     joe$ myaws -- kubectl auth can-i get all
     + /usr/local/bin/aws-vault exec my-vault-profile -- kubectl auth can-i get all
-    Warning: the server doesn't have a resource type 'all'
     yes
     ``` 
 
-2. Source the output into your bash shell to keep a profile loaded for the duration
+2. `source` the into your bash shell to keep a profile loaded for the duration
 of your bash session.
 
     Here's an example: 
     ```bash
-    joe$ . myaws
+    
+    joe$ source myaws
 
     joe$ aws ec2 describe-hosts
     {
-        "Hosts": []
+        "Hosts": [
+            "host1",
+            "host2"
+         ]
     } 
-
+    
+    joe$ kubectl auth can-i get all
+    yes
     ```
 
 3. Use `myaws` to create a new shell
 
+    This will create a new shell with all of your aws credentials loaded.
     ```bash
     joe$ myaws --
     [my-vault-profile] joe$> kubectl auth can-i get all
-    Warning: the server doesn't have a resource type 'all'
     yes
+    [my-vault-profile] joe$> aws ec2 describe-hosts
+    {
+        "Hosts": [
+            "host1",
+            "host2"
+         ]
+    } 
+ 
+    # To return to your previou shell, just exit
+    [my-vault-profile] joe$> exit 
+    joe$ 
 
     ```
     
