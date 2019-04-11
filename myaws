@@ -1,0 +1,66 @@
+#!/bin/bash -o pipefail
+MYVAULT_COMMAND='/usr/local/bin/aws-vault'
+
+set_up_env=$(cat <<EOF
+\033[1;33m
+The MYAWS_DEFAULT_PROFILE has not been set. Once you set it, this message
+will disappear.
+
+You can set this by running:
+
+    $ echo "export MYAWS_DEFAULT_PROFILE=<insert_profile_name>" >> ~/.bashrc
+    $ . ~/.bashrc
+\033[0m
+EOF
+)
+
+if [[ -z "${MYAWS_PS1}" ]] ; then
+    export MYAWS_PS1="\h:\W \u$"
+fi
+
+# If you have the environment variable AWS_VAULT_PROFILE set,
+# then we will use that, otherwise we default to another.
+if [[ -z "${MYAWS_DEFAULT_PROFILE}" ]] ; then
+    echo -e "${set_up_env}"
+else
+    export MYAWS_PROFILE=${MYAWS_DEFAULT_PROFILE}
+fi
+
+if [[ ! -z ${AWS_VAULT} ]] ; then
+    unset AWS_VAULT
+fi
+
+MYAWS_VAULT_COMMAND="${MYVAULT_COMMAND} exec ${MYAWS_PROFILE}"
+
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]] ; then
+    # Handle functionality when you you source the output of this file
+    MYAWS_VAULT_OUTPUT=$(${MYAWS_VAULT_COMMAND} -- env)
+    rc=$?
+    if [[ ${rc} != 0 ]] ; then
+        echo "# Error: ${MYAWS_VAULT_OUTPUT}"
+    else
+        MYAWS_VAULT_OUTPUT=$(echo "$(${MYAWS_VAULT_COMMAND} -- env)" | grep AWS | grep -v MYAWS)
+        for l in $( echo "${MYAWS_VAULT_OUTPUT}" ) ; do
+            export ${l}
+        done
+    fi
+else
+    if [[ $# -lt 1 ]] ; then
+        echo "Using aws profile: ${MYAWS_PROFILE}"
+        echo
+        ${MYVAULT_COMMAND} list
+    else
+        if [[ $1 == "--" ]] ; then
+            if [[ $# -eq 1 ]] ; then
+                ${MYAWS_VAULT_COMMAND} -- env PS1="\[\e[35m\][$(echo ${MYAWS_PROFILE})]\[\e[m\] $(echo ${MYAWS_PS1})>" bash
+            else
+                set -x
+                ${MYAWS_VAULT_COMMAND} $@
+            fi
+        else
+            set -x
+            ${MYAWS_VAULT_COMMAND} -- aws $@
+        fi
+    fi
+fi
+
