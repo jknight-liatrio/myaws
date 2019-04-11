@@ -1,5 +1,12 @@
 #!/bin/bash -o pipefail
-MYVAULT_COMMAND='/usr/local/bin/aws-vault'
+
+MYVAULT_COMMAND="$(which aws-vault)"
+if [[ -z ${MYVAULT_COMMAND} ]] ; then
+    echo -e "\033[1;33mNo aws-vault command found in path. Make sure that aws-vault installed and in your PATH. \033[0m"
+    if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+        exit 1
+    fi
+fi
 
 set_up_env=$(cat <<EOF
 \033[1;33m
@@ -13,6 +20,7 @@ You can set this by running:
 \033[0m
 EOF
 )
+
 
 if [[ -z "${MYAWS_PS1}" ]] ; then
     export MYAWS_PS1="\h:\W \u$"
