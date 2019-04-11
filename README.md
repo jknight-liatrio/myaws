@@ -2,7 +2,7 @@
  
 Making `aws-vault` easier.
 
-Are you tired of constantly appending `aws-vault my-profile exec -- ...` in front of all of you `aws` commands?
+Are you tired of constantly adding `aws-vault my-profile exec -- ...` in front of all of you `aws` commands?
 There has to be a better way...
 
 <img src="https://media.giphy.com/media/l0HlOrRj8sqK1xiJa/giphy.gif" />
